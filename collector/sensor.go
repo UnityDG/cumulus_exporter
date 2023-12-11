@@ -21,6 +21,7 @@ var (
 		"fanSpeed":    colPromDesc(sensorSubsystem, "fan_speed_rpm", "Fan Speed RPM.", sensorLabels),
 		"minTemp":     colPromDesc(sensorSubsystem, "minimum_operating_temperature_celsius", "Minimum Operating Temperature in Celsius.", sensorLabels),
 		"maxTemp":     colPromDesc(sensorSubsystem, "maximum_operating_temperature_celsius", "Maximum Operating Temperature in Celsius.", sensorLabels),
+		"critTemp":    colPromDesc(sensorSubsystem, "critical_operating_temperature_celsius", "Critical Operating Temperature in Celsius.", sensorLabels),
 		"minFanSpeed": colPromDesc(sensorSubsystem, "minimum_operating_fan_speed_rpm", "Minimum Operating Fan Speed RPM.", sensorLabels),
 		"maxFanSpeed": colPromDesc(sensorSubsystem, "maximum_operating_fan_speed_rpm", "Maximum Operating Fan Speed RPM.", sensorLabels),
 	}
@@ -102,6 +103,7 @@ func sensorMetrics(ch chan<- prometheus.Metric, sensor sensorData, labels []stri
 		newGauge(ch, sensorDesc["temp"], sensor.Input, labels...)
 		newGauge(ch, sensorDesc["minTemp"], sensor.Min, labels...)
 		newGauge(ch, sensorDesc["maxTemp"], sensor.Max, labels...)
+		newGauge(ch, sensorDesc["critTemp"], sensor.Crit, labels...)
 	}
 }
 
@@ -113,4 +115,5 @@ type sensorData struct {
 	Type        string  `json:"type"`
 	Max         float64 `json:"max,omitempty"`
 	Min         float64 `json:"min,omitempty"`
+	Crit        float64 `json:"crit,omitempty"`
 }
