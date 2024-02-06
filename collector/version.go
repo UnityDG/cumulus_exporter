@@ -52,7 +52,7 @@ func (c *VersionCollector) Get(ch chan<- prometheus.Metric) (float64, error) {
 		}
 	}
 	labels := []string{collectedVersionInfo.majorStr, collectedVersionInfo.minorStr, collectedVersionInfo.patchStr, collectedVersionInfo.release}
-	noLabels := []string{}
+	var noLabels []string
 
 	newGauge(ch, versionDesc["info"], 1, labels...)
 	newGauge(ch, versionDesc["major"], collectedVersionInfo.major, noLabels...)

@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/alecthomas/kingpin/v2"
+	"github.com/phuslu/log"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/common/log"
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
 const (
@@ -46,7 +46,7 @@ func registerCollector(name string, enabledByDefault bool, collector func() Coll
 
 // Collector is the interface a collector has to implement.
 type Collector interface {
-	// Gets metrics and sends to the Prometheus.Metric channel.
+	// Get metrics and sends to the Prometheus.Metric channel.
 	Get(ch chan<- prometheus.Metric) (float64, error)
 }
 
@@ -87,12 +87,12 @@ func runCollector(ch chan<- prometheus.Metric, name string, collector Collector,
 	startTime := time.Now()
 	totalErrors, err := collector.Get(ch)
 
-	ch <- prometheus.MustNewConstMetric(cumulusDesc["scrapeDuration"], prometheus.GaugeValue, float64(time.Since(startTime).Seconds()), name)
+	ch <- prometheus.MustNewConstMetric(cumulusDesc["scrapeDuration"], prometheus.GaugeValue, time.Since(startTime).Seconds(), name)
 	ch <- prometheus.MustNewConstMetric(cumulusDesc["scrapeErrTotal"], prometheus.GaugeValue, totalErrors, name)
 
 	if err != nil {
 		ch <- prometheus.MustNewConstMetric(cumulusDesc["collectorUp"], prometheus.GaugeValue, 0, name)
-		log.Errorf("collector %q scrape failed: %s", name, err)
+		log.Error().Msgf("collector %q scrape failed: %s", name, err)
 	} else {
 		ch <- prometheus.MustNewConstMetric(cumulusDesc["collectorUp"], prometheus.GaugeValue, 1, name)
 	}

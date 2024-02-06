@@ -6,8 +6,8 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/alecthomas/kingpin/v2"
 	"github.com/prometheus/client_golang/prometheus"
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (
@@ -64,18 +64,17 @@ func getResourceStats() ([]byte, error) {
 
 func processResourceStats(ch chan<- prometheus.Metric, jsonResourceSum []byte) error {
 	dataMap := map[string]*resourceEntry{}
-	if err:= json.Unmarshal(jsonResourceSum, &dataMap); err != nil {
+	if err := json.Unmarshal(jsonResourceSum, &dataMap); err != nil {
 		return fmt.Errorf("cannot unmarshal resource json: %s", err)
 	}
 
 	for _, v := range dataMap {
-	        newGauge(ch, resourceDesc["max"], v.Max, strings.ToLower(v.Name))
-	        newGauge(ch, resourceDesc["used"], v.Count, strings.ToLower(v.Name))
+		newGauge(ch, resourceDesc["max"], v.Max, strings.ToLower(v.Name))
+		newGauge(ch, resourceDesc["used"], v.Count, strings.ToLower(v.Name))
 	}
 
 	return nil
 }
-
 
 type resourceEntry struct {
 	Count float64 `json:"count"`

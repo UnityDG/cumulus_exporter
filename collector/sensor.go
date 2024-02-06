@@ -6,8 +6,8 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/alecthomas/kingpin/v2"
 	"github.com/prometheus/client_golang/prometheus"
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (
@@ -86,7 +86,7 @@ func processSensorStats(ch chan<- prometheus.Metric, jsonSensorSum []byte) error
 			newGauge(ch, sensorDesc["state"], 2.0, labels...)
 		} else {
 			newGauge(ch, sensorDesc["state"], 0.0, labels...)
-			// Best effort attempt to get metrcs in a bad state
+			// Best effort attempt to get metrics in a bad state
 			sensorMetrics(ch, sensor, labels)
 		}
 	}

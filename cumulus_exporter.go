@@ -3,12 +3,12 @@ package main
 import (
 	"net/http"
 
+	"github.com/alecthomas/kingpin/v2"
+	"github.com/phuslu/log"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/prometheus/common/log"
 	"github.com/prometheus/common/version"
 	"github.com/tynany/cumulus_exporter/collector"
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (
@@ -16,24 +16,38 @@ var (
 	telemetryPath = kingpin.Flag("web.telemetry-path", "Path under which to expose metrics.").Default("/metrics").String()
 )
 
+type PhusluPromErrorLogger struct{}
+
+func (p *PhusluPromErrorLogger) Println(v ...interface{}) {
+	log.Error().Msgf("%v", v)
+}
+
+var _ promhttp.Logger = &PhusluPromErrorLogger{}
+
+func NewPhusluPromErrorLogger() *PhusluPromErrorLogger {
+	return &PhusluPromErrorLogger{}
+}
+
 func handler(w http.ResponseWriter, r *http.Request) {
 	registry := prometheus.NewRegistry()
 
-	registry.Register(collector.NewExporter())
+	_ = registry.Register(collector.NewExporter())
 
-	gatheres := prometheus.Gatherers{
+	gatherers := prometheus.Gatherers{
 		prometheus.DefaultGatherer,
 		registry,
 	}
+
+	httpErrorLoggerWrapper := NewPhusluPromErrorLogger()
+
 	handlerOpts := promhttp.HandlerOpts{
-		ErrorLog:      log.NewErrorLogger(),
+		ErrorLog:      httpErrorLoggerWrapper,
 		ErrorHandling: promhttp.ContinueOnError,
 	}
-	promhttp.HandlerFor(gatheres, handlerOpts).ServeHTTP(w, r)
+	promhttp.HandlerFor(gatherers, handlerOpts).ServeHTTP(w, r)
 }
 
 func parseCLI() {
-	log.AddFlags(kingpin.CommandLine)
 	kingpin.Version(version.Print("cumulus_exporter"))
 	kingpin.HelpFlag.Short('h')
 	kingpin.Parse()
@@ -44,11 +58,11 @@ func main() {
 
 	parseCLI()
 
-	log.Infof("Starting cumulus_exporter %s on %s", version.Info(), *listenAddress)
+	log.Info().Msgf("Starting cumulus_exporter %s on %s", version.Info(), *listenAddress)
 
 	http.HandleFunc(*telemetryPath, handler)
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`<html>
+		_, _ = w.Write([]byte(`<html>
 			<head><title>Cumulus Exporter</title></head>
 			<body>
 			<h1>Cumulus Exporter</h1>
@@ -58,6 +72,6 @@ func main() {
 	})
 
 	if err := http.ListenAndServe(*listenAddress, nil); err != nil {
-		log.Fatal(err)
+		log.Fatal().Err(err)
 	}
 }
